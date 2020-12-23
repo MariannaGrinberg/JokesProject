@@ -1,32 +1,34 @@
 # JokesProject
-הפרויקט מדמה מערכת במבנה שרת-לקוח עבור בדיחות. דרך המערכת ניתן להוסיף בדיחה, לצפות בבדיחה רנדומלית מהמאגר ולדרג אותה ולצפות ב-5 הבדיחות בעלות הדירוג הגבוה ביותר. 
-הוראות
-להפעלת המערכת יש לפתוח שני חלונות cmd – אחד לשרת ואחד ללקוח ולהפעיל את erlang.
-בחלון אחד יש להריץ את השרת ע"י הפונקציה jokesServer:start() המפעילה את השרת.
-בחלון השני יש להריץ את הפונקציה jokesClient("Request") כאשר במקום Request שולחים את אחת מהאפשרויות הבאות:
-add joke –הוספת בדיחה חדשה למאגר הבדיחות.
-random joke – הצגת בדיחה רנדומלית מתוך המאגר, מתן אפשרות ללקוח לדרג את הבדיחה ושקלול הדירוג הממוצע של הבדיחה.
-top 5 – הצגת 5 הבדיחות בעלות הדירוג הממוצע הגבוה ביותר.
-מודולים מרכזיים
-צד שרת
-server(Port) – פונקציה אשר מאתחלת את השרת ואת מאגר הבדיחות הבסיסי הבנוי כרשימה המכילה בתוכה טופלים – האיבר הראשון בטופל הוא הבדיחה עצמו והאיבר השני בטופל הוא רשימה המכילה בתוכה את הדירוגים שהתקבלו עבור אותה בדיחה, ומפעילה את הפונקציה loop(Socket, Jokes) אשר מתחילה להאזין לבקשות המתקבלות מהלקוח.
-loop(Socket, Jokes) – פונקציית ההאזנה והטיפול בפניות המתקבלות מהלקוח. הפונקציה מקבלת כל פעם את רשימת הבדיחות המעודכנת כדי לכלול שינויים כדוגמת בדיחה שנוספה או דירוג נוסף לבדיחה. הפונקציה מטפלת במקרים של הודעות מוגדרות, או במקרים של פקטות המכילות מידע מתחלף (תוכן של בדיחה חדשה או דירוג של בדיחה) מפרקת את הפקטה לסוג הודעה ולתוכן הרלוונטי. הפונקציה מטפלת גם במקרה בו ההודעה שהתקבלה אינה תקינה. המקרים השונים בהם מטפל השרת מופעלים כל אחד בתהליך נפרד כדי ליצור עבודה מקבילית. בתהליכים הנפרדים הללו מופעלות פונקציות העזר לביצוע הטיפול בבקשות:
-add(Socket, Host, Port) – שולחת ללקוח הודעה שתפעיל אצל הלקוח קליטת בדיחה חדשה
-newJoke(Jokes, Joke, Master) – הוספת בדיחה חדשה אל רשימת הבדיחות ושליחת הודעה עצמית (לתהליך עצמו של השרת) להחזרת הרשימה המעודכנת מהתהליך.
-randomJoke(Socket, Host, Port, Jokes) – פונקציה הבוחרת באופן רנדומלי בדיחה מתוך הרשימה ושולחת כפקטה ללקוח.
 
-jokeRate(Socket, Host, Port, Jokes, Msg, Master) – פונקציה המקבלת מהלקוח את הדירוג שלו לבדיחה הרנדומלית שקיבל, מוסיפה את הדירוג החדש לרשימת הדירוגים של אותה הבדיחה ושולחת ללקוח את הדירוג הממוצע החדש של הבדיחה. הפונקציה שולחת את רשימת הבדיחות החדשה המעודכנת עם הדירוג החדשה בתור הודעה עצמית לצורך עדכון.
-getTop5(Socket, Host, Port, Jokes) – פונקציה אשר ממיינת את רשימת הבדיחות לפי הדירוג הממוצע של הבדיחה. הפונקציה יוצרת רשימה חדשה באמצעות פונקציה רקורסיבית – createList ומרכיבה רשימה של טופלים המורכבים מהבדיחה עצמה ומהדירוג הממוצע של הבדיחה. הפונקציה ממיינת את הרשימה על פי הדירוג הממוצע והופכת את הסדר כך שהרשימה תסודר מהגדול לקטן. הפונקציה יוצרת רשימה המכילה את חמשת המקומות הראשונים והופכת אותה ל-string כדי לאפשר שליחה ושולחת את ההודעה.
-צד לקוח
-client(Request) – פונקציה הפותחת Socket חדש עבור צד הלקוח, שולחת את הבקשה אל השרת, ממתינה לתשובה ומפעילה את הפונקציה receive_message לטיפול בתשובה שמתקבלת, סוגרת את ה-Socket ומחזירה את התשובה.
-receive_message(Socket) – פונקציה המטפלת בתשובות אשר מתקבלות מהשרת ומגיעות אל הלקוח. הפונקציה מטפלת בהודעות מוגדרות, אך גם במקרים בהם ההודעות המתקבלות הן חלק מפקטה המכילה מספר פרטי מידע, ויש צורך לפרק את הפקטה ולהשתמש בחלקי המידע השונים. הפקטות הללו יהיו מורכבות מסוג ההודעה ומהמידע עצמו, לאחר פירוק וחיפוש המקרה המתאים לסוג ההודעה, ההודעה תטופל בהתאם. כלל ההודעות אשר מגיעות אל הלקוח מגיעות כ-string ויש להמיר אותן לסוג הרלוונטי במהלך הטיפול בהודעה. כמו כן, עבור הכנסת הדירוג ע"י הלקוח מתבצעת בדיקת תקינות שהקלט המתקבל הוא מספר שלם בלבד בין 1 ל-5.
-הסבר התוצאות
-הוספת בדיחה
-פנייה מהלקוח -> קבלה בשרת ושליחת הודעה להכנסת בדיחה -> קבלה אצל הלקוח ושליחת הבדיחה -> קבלה בשרת והוספת הבדיחה החדשה למערך הבדיחות
-הבדיחה החדשה הנשלחת מהלקוח מוכנסת אל מאגר הבדיחות והשרת ממשיך לפעול עם מאגר הבדיחות החדש.
-בדיחה רנדומלית
-פנייה מהלקוח -> קבלה בשרת, שליחת בדיחה רנדומלית ובקשה לדירוג -> קבלה אצל הלקוח, קבלת בדיחה ודירוגה -> קבלה בשרת, הוספת הדירוג לבדיחה ושליחת הדירוג הממוצע -> קבלה אצל הלקוח והצגת הדירוג הממוצע
-הלקוח מקבל בדיחה רנדומלית אותה הוא נדרש לדרג, הדירוג החדש מתווסף למאגר והלקוח מקבל את הדירוג הממוצע של הבדיחה.
-5 הבדיחות המוצלחות
-פנייה מהלקוח -> קבלה בשרת, מיון המערך, הוצאת 5 הבדיחות המוצלחות ביותר עפ"י דירוג ושליחתן ללקוח -> קבלה אצל הלקוח והצגת הבדיחות
-הלקוח מקבל את חמשת הבדיחות המוצלחות ביותר עפ"י הדירוג באותו רגע נתון (המערך ממשיך להתעדכן על סמך דירוגים ובדיחות חדשים)
+The project simulates a server-server system for jokes. Through the system you can add a joke, watch a random joke from the database and rate it and watch the 5 jokes with the highest rating.
+
+Instructions:
+
+To activate the system, open two cmd windows - one for the server and one for the client, and start erlang.
+In one window the server should be run by the jokesServer: start () function that activates the server.
+In the second window, run the jokesClient ("Request") function, sending one of the following options instead of Request:
+add joke - Add a new joke to the joke database.
+random joke - Presenting a random joke from the database, allowing the customer to rate the joke and weighting the average rating of the joke.
+top 5 - Show 5 jokes with the highest average rating.
+
+Key modules:
+
+Server side
+
+server (Port) - a function that initializes the server and the basic database of jokes built as a list that contains patients - the first organ in the patient is the joke itself and the second organ in the patient is a list that contains the ratings received for that joke, and activates the loop function (Socket, Jokes) Begins to listen to requests received from the customer.
+
+loop (Socket, Jokes) - The function of listening and handling inquiries received from the customer. The function receives the updated list of jokes each time to include changes such as an added joke or an additional rating for the joke. The function handles cases of defined messages, or cases of facts containing interchangeable information (content of a new joke or rating of a joke) breaks down the fact into the type of message and the relevant content. The function also handles the case where the received message is invalid. The different cases in which the server handles are each activated in a separate process to create parallel work. In these separate processes, the auxiliary functions for performing the request processing are activated:
+
+add (Socket, Host, Port) - sends the customer a message that will activate a new joke reception at the customer
+newJoke (Jokes, Joke, Master) - Adding a new joke to the list of jokes and sending a self-message (to the server process itself) to return the updated list from the process.
+randomJoke (Socket, Host, Port, Jokes) - A function that randomly selects a joke from the list and sends it as a fact to the customer.
+
+jokeRate (Socket, Host, Port, Jokes, Msg, Master) - A function that receives from the customer his rating for the random joke he received, adds the new rating to the rating list of that joke and sends the customer the new average rating of the joke. The function sends the updated list of jokes updated with the new rating as a self-notification for updating.
+
+getTop5 (Socket, Host, Port, Jokes) - A function that sorts the list of jokes according to the average rating of the joke. The function creates a new list using a recursive function - createList and compiles a list of patients consisting of the joke itself and the average rating of the joke. The function sorts the list according to the average rating and turns the order so that the list is sorted from large to small. The function creates a list that contains the first five places and converts it to a string to enable sending and sending the message.
+
+Customer side
+
+client (Request) - A function that opens a new Socket for the client side, sends the request to the server, waits for a response and activates the receive_message function to handle the received response, closes the Socket and returns the response.
+
+receive_message (Socket) - A function that handles responses that are received from the server and reach the client. The function handles defined messages, but also in cases where the messages received are part of a packet that contains a number of information details, and it is necessary to break down the packet and use the various pieces of information. These facts will consist of the type of message and the information itself, after dismantling and searching for the appropriate case for the type of message, the message will be handled accordingly. All messages that reach the customer come as a string and must be converted to the relevant type during message handling. Also, for the introduction of the rating by the customer, a validity check is performed that the input received is only an integer between 1 and 5.
