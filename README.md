@@ -2,7 +2,7 @@
 
 The project simulates a client-server system for jokes. Through the system you can add a joke, watch a random joke from the dataset and rate it and watch the 5 jokes with the highest rating.
 
-Instructions:
+## Instructions:
 
 To activate the system, open two cmd windows - one for the server and one for the client, and start erlang.
 In one window the server should be run by the jokesServer: start() function that activates the server.
@@ -12,9 +12,9 @@ add joke - Add a new joke to the joke dataset.
 random joke - Presenting a random joke from the dataset, allowing the customer to rate the joke and return the average rating of the joke.
 top 5 - Show 5 jokes with the highest average rating.
 
-Key modules:
+## Key modules:
 
-Server side
+### Server side
 
 server (Port) - a function that initializes the server and the basic dataset of jokes built as a list that contains tuples - the first organ in the tuple is the joke itself and the second organ is a list that contains the ratings received for that joke, and activates the loop function (Socket, Jokes) Begins to listen to requests received from the customer.
 
@@ -28,7 +28,7 @@ jokeRate (Socket, Host, Port, Jokes, Msg, Master) - A function that receives fro
 
 getTop5 (Socket, Host, Port, Jokes) - A function that sorts the list of jokes according to the average rating of the joke. The function creates a new list using a recursive function - createList and compiles a list of tuples consisting of the joke itself and the average rating of the joke. The function sorts the list according to the average rating and turns the order so that the list is sorted from large to small. The function creates a list that contains the first five places and converts it to a string and sending the message back to the client.
 
-Customer side
+### Customer side
 
 client (Request) - A function that opens a new Socket for the client side, sends the request to the server, waits for a response and activates the receive_message function to handle the received response, closes the Socket and returns the response.
 
